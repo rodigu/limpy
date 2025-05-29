@@ -1,0 +1,1763 @@
+openapi: 3.0.0
+info:
+    title: limpy
+    description: >-
+        <img
+        src="/assets/images/logo-limber.svg"
+        alt="Limber API Documentation"> Limber API Documentation
+    version: 2.0.0
+servers:
+    -   url: https://card.limbersoftware.com.br
+components:
+    securitySchemes:
+        noauthAuth:
+            type: http
+            scheme: noauth
+        bearerAuth:
+            type: http
+            scheme: bearer
+tags:
+    -   name: Autenticação
+    -   name: Consultas
+paths:
+    /api/auth:
+        post:
+            tags:
+                - Autenticação
+            summary: Autenticação
+            description: >-
+                Um único login de integração pode fazer chamadas na API de diversos
+                parceiros, como exemplo, um mesmo integrador que faz a integração das
+                vendas de vários e-commerces, cada um de um parceiro específico, porém
+                utilizando o mesmo token de autenticação. Mas também é possível realizar
+                a criação de um login único para cada parceiro de venda.
+
+                ## Tempo de validade do token
+
+                O token tem tempo de validade indeterminado, somente deixa de ser válido
+                após a senha ser alterada ou o parceiro não estiver mais cadastrado.
+
+
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                usuario:
+                                    type: string
+                                    description: Seu Usuário
+                                senha:
+                                    type: string
+                                    description: Sua Senha
+                            example:
+                                usuario: usuario
+                                senha: senha
+                            required:
+                                - usuario
+                                - senha
+            parameters:
+                -   name: Content-Type
+                    in: header
+                    schema:
+                        type: string
+                    example: application/json
+
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    codigo:
+                                        type: number
+                                        description: Código unitário do usuário em questão
+                                    nivel:
+                                        type: number
+                                        description: Nível de Permissões do Usuário
+                                    nome:
+                                        type: string
+                                        description: Nome do usuário
+                                    usuario:
+                                        type: string
+                                        description: Seu Usuário
+                                    token:
+                                        type: string
+                                        description: Token para Autenticação
+                                    parceiros:
+                                        type: array
+                                        description: Lista de parceiros que o usuário pode realizar requisições de integração
+                                        items:
+                                            type: object
+                                            properties:
+                                                idparceiro:
+                                                    type: number
+                                                    description: Código do parceiro
+                                                nomeparceiro:
+                                                    type: string
+                                                    description: Nome do parceiro
+                            example:
+                                codigo: 999
+                                nivel: 30
+                                nome: Nome do usuário
+                                usuario: Limber
+                                token: >-
+                                    <Use esse Token de Autenticação para realizar outras
+                                    Requisições>
+                                parceiros:
+                                    - idparceiro: 9
+                                      nomeparceiro: Bilheteria - Parque do Ali
+                                    - idparceiro: 99
+                                      nomeparceiro: Bilheteria - Parque do Dino
+                                    - idparceiro: 999
+                                      nomeparceiro: Ecommmerce Limber - VilaNova
+                '400':
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        description: Mensagem especificando o erro
+                            examples:
+                                usuarioIncorreto:
+                                    value:
+                                        message: Usuário limber não cadastrado
+                                senhaIncorreta:
+                                    value:
+                                        message: Senha incorreta
+
+    /api/vendas:
+        get:
+            tags:
+                - Consultas
+            summary: Listagem de vendas
+            description: >-
+                Rota destinada a retornar as vendas realizadas a qualquer
+                estabelecimento que o seu usuário tenha permissão de visualização.
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                localizador:
+                                    type: string
+                                    description: Código único da venda
+                                dataVendaInit:
+                                    type: string
+                                    description: Data início para pesquisa
+                                dataVendaFim:
+                                    type: string
+                                    description: Data final para pesquisa
+                                dataVisitaInit:
+                                    type: string
+                                    description: Filtro de vendas agendadas para o mesmo dia ou após essa data
+                                dataVisitaFim:
+                                    type: string
+                                    description: Filtro de vendas agendadas para o mesmo dia ou antes essa data
+                                dataCancelamentoInit:
+                                    type: string
+                                    description: Filtro de vendas com itens cancelados para o mesmo dia ou após essa data
+                                dataCancelamentoFim:
+                                    type: string
+                                    description: Filtro de vendas com itens cancelados para o mesmo dia ou antes essa data
+                                dataUtilizacaoInit:
+                                    type: string
+                                    description: Filtro de vendas utilizadas para o mesmo dia ou antes essa data
+                                dataUtilizacaoFim:
+                                    type: string
+                                    description: Filtro de vendas utilizadas para o mesmo dia ou após essa data
+                                statusArray:
+                                    type: array
+                                    description: Status da venda
+                                    items:
+                                        type: string
+                                idOrigem:
+                                    type: number
+                                    description: Código da venda no estabelecimento de origem da venda
+                                nomeOrEmail:
+                                    type: string
+                                    description: Nome ou E-mail do titular da compra
+                                estabelecOrig:
+                                    type: number
+                                    description: Código do estabelecimento de venda
+                                estabelecDest:
+                                    type: number
+                                    description: Código do estabelecimento de destino(Bilheteria)
+                                bilhetes:
+                                    type: string
+                                    description: Códigos dos bilhetes a serem filtrados(separados por vírgula)
+                                codClienteEc:
+                                    type: number
+                                    description: Código do cliente final que realizou a compra
+                                modoPagArray:
+                                    type: string
+                                    description: Número ou lista de modo de pagamento(separados por vírgula)
+                                nsuIdAutorizacao:
+                                    type: string
+                                    description: ID Autorização devolvido pela adquirente de pagamento
+                                locaisEmbarque:
+                                    type: string
+                                    description: Número ou lista de local de embarque(separados por vírgula
+                            example:
+                                localizador: localizador
+                                dataVendaInit: dataVendaInit
+                                dataVendaFim: dataVendaFim
+                                dataVisitaInit: dataVisitaInit
+                                dataVisitaFim: dataVisitaFim
+                                dataCancelamentoInit: dataCancelamentoInit
+                                dataCancelamentoFim: dataCancelamentoFim
+                                dataUtilizacaoInit: dataUtilizacaoInit
+                                dataUtilizacaoFim: dataUtilizacaoFim
+                                statusArray: statusArray
+                                idOrigem: idOrigem
+                                nomeOrEmail: nomeOrEmail
+                                estabelecOrig: estabelecOrig
+                                estabelecDest: estabelecDest
+                                bilhetes: bilhetes
+                                codClienteEc: codClienteEc
+                                modoPagArray: modoPagArray
+                                nsuIdAutorizacao: nsuIdAutorizacao
+                                locaisEmbarque: locaisEmbarque
+            parameters:
+                - name: Authorization
+                  in: header
+                  schema:
+                      type: string
+                  example: 'Bearer '
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    codigo:
+                                        type: number
+                                        description: Código único da venda em questão
+                                    localizador:
+                                        type: string
+                                        description: Código único da venda com prefixo
+                                    data_hora:
+                                        type: string
+                                        description: Data e hora do registro da venda formatada
+                                    idorigem:
+                                        type: string
+                                        description: Código da venda no estabelecimento de origem
+                                    cod_local_venda:
+                                        type: number
+                                        description: Código do estabelecimento que realizou a venda
+                                    ponto_venda:
+                                        type: string
+                                        description: URL do e-commerce que realizou a venda
+                                    local_venda:
+                                        type: string
+                                        description: Nome do estabelecimento que realizou a venda
+                                    nome_titular:
+                                        type: string
+                                        description: Nome do titular da venda
+                                    email_titular:
+                                        type: string
+                                        description: E-mail do titular da venda
+                                    fone_titular:
+                                        type: string
+                                        description: Telefone do titular da venda
+                                    doc_titular:
+                                        type: string
+                                        description: Documento do titular da venda
+                                    nascimento_titular:
+                                        type: string
+                                        description: Data de nascimento do titular da venda formatada
+                                    codigo_promocional:
+                                        type: string
+                                        description: Código promocional que foi aplicado para a venda
+                                    total_liquido:
+                                        type: number
+                                        description: Valor total da venda
+                                    idioma:
+                                        type: string
+                                        description: Idioma da venda ("PT", "EN", "ES")
+                                    data_hora_inc:
+                                        type: string
+                                        format: date-time
+                                        description: Data e hora do registro da venda UTC
+                                    pedido_de_cancelamento:
+                                        type: boolean
+                                        description: Se a venda tem algum item com pedido de cancelamento
+                                    ip_comprador:
+                                        type: string
+                                        description: IP do dispositivo do comprador
+                                    tag_nao_enviada:
+                                        type: string
+                                        description: Parâmetro indica se o pagamento foi enviado para o TagManager, quando é "null" o pagamento foi enviado. Se for "true", significa que o pagamento ainda não foi enviado para o TagManager
+                                    quantidade:
+                                        type: number
+                                        description: Quantidade de itens da venda
+                                    importante:
+                                        type: boolean
+                                        description: Quantidade de itens da venda
+                                    tick_nome:
+                                        type: string
+                                        description: Nome do cadastro do Tick Ingressos
+                                    tick_terminal:
+                                        type: string
+                                        description: Identificador do dispositivo que roda o aplicativo do Tick Ingressos e realizou a venda
+                                    tick_term_descricao:
+                                        type: string
+                                        description: Descrição do dispositivo que roda o aplicativo do Tick Ingressos e realizou a venda
+                                    formas_pag_desc:
+                                        type: array
+                                        description: Forma(s) de pagamento utilizados na venda
+                                        items:
+                                            type: string
+                                    nome_adquirente:
+                                        type: string
+                                        description: Nome da adquirente de pagamento
+                                    data:
+                                        type: string
+                                        description: Data da venda formatada - DD/MM/YYYY
+                                    hora:
+                                        type: string
+                                        description: Hora da venda formatada - HH:mm:ss
+                                    atrativo_data_nasc:
+                                        type: string
+                                        description: Data de nascimento do visitante (PRIMEIRO ITEM DA VENDA)
+                                    data_visita:
+                                        type: string
+                                        description: Data de visita (PRIMEIRO ITEM DA VENDA)
+                                    data_visita_final:
+                                        type: string
+                                        description: Data de visita final (PRIMEIRO ITEM DA VENDA)
+                                    uso_data_hora:
+                                        type: string
+                                        description: Data/Hora de utilização (PRIMEIRO ITEM DA VENDA)
+                                    data_hora_canc:
+                                        type: string
+                                        description: Data/Hora de cancelamento (PRIMEIRO ITEM DA VENDA)
+                                    status_desc:
+                                        type: string
+                                        description: Descrição referente ao status da venda
+                            example:
+                                codigo: 20384029
+                                localizador: "LB20384029"
+                                data_hora: "03/01/2024 15:10:00"
+                                status: "A"
+                                idorigem: "1010"
+                                cod_local_venda: 624
+                                ponto_venda: "https://qa.limber.net.br/"
+                                local_venda: "AGÊNCIA DEMONSTRAÇÃO"
+                                nome_titular: "NOME DO TITULAR"
+                                email_titular: "emailtitular@email.com"
+                                fone_titular: "+55 46999990000"
+                                doc_titular: "12345678910"
+                                nascimento_titular: "10/11/2003"
+                                codigo_promocional: null
+                                total_liquido: 0.1
+                                idioma: "PT"
+                                data_hora_inc: "2024-01-03T18:07:32.344Z"
+                                pedido_de_cancelamento: false
+                                ip_comprador: "111.111.111.11"
+                                tag_nao_enviada: null
+                                quantidade: 1
+                                importante: false
+                                tick_nome: null
+                                tick_terminal: null
+                                tick_term_descricao: null
+                                formas_pag_desc: "Cartão"
+                                nome_adquirente: "NOME ADQUIRENTE"
+                                data: "03/01/2024"
+                                hora: "15:10:00"
+                                atrativo_data_nasc": null
+                                data_visita: null
+                                data_visita_final: null
+                                uso_data_hora: null
+                                data_hora_canc: null
+                                data_hora_utilizacao: null
+                                status_desc: "Aprovada"
+                '400':
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        description: Mensagem especificando o erro
+                            example:
+                                message: Mensagem especificando o erro
+
+    /api/vendas/venda/{idVenda}:
+        get:
+            tags:
+                - Consultas
+            summary: Listagem de uma Venda em específico
+            description: >-
+                Rota destinada a buscar informações de uma venda.
+
+
+                ## Descrição do retorno
+
+
+                | **Chave** | **Tipo** | **Descrição** |
+
+                | --- | --- | --- |
+
+                | `codigo` | number | ID único da venda |
+
+                | `localizador` | string | ID único da venda com prefixo |
+
+                | `data_hora` | string | Data e hora do registro da venda formatada |
+
+                | `status` | string | Caractere identificador do status da venda |
+
+                | `total_liquido` | number | Valor total da venda |
+
+                | `data_hora_inc` | Date | Data e hora do registro da venda UTC |
+
+                | `usuario_logado` | number | Código do usuário do CARD que realizou a reserva |
+
+                | `usuario_logado_nome` | string | Nome do usuário do CARD que realizou a reserva |
+
+                | `usuario_venda` | string | Nome do usuário do E-commerce que realizou a reserva |
+
+                | `codigo_promocional` | string | Código promocional que foi aplicado para a venda |
+
+                | `reserva_suspeita` | boolean | Informa que a venda é suspeita |
+
+                | `local_venda` | string | Nome do estabelecimento que realizou a venda |
+
+                | `pedido_canc_portal` | string | Parâmetro define se o estabelecimento de venda permite realizar pedido de cancelamento |
+
+                | `intervalo_tempo_pagamento` | number | Parâmetro que define quanto tempo o usuário tem para realizar o pagamento da reserva. Só é permitido em estabelecimentos do tipo AGÊNCIA e E-COMMERCE |
+
+                | `nome_local_venda` | string | Nome do usuário do CARD referente ao estabelecimento de venda |
+
+                | `tick_codigo` | number | Código unitário do cadastro do Tick Ingressos |
+
+                | `tick_nome` | string | Nome do cadastro do Tick Ingressos |
+
+                | `tick_codigo_nome` | string | Código e nome do cadastro do Tick Ingressos |
+
+                | `tick_terminal` | string | Código do terminal que realizou a reserva |
+
+                | `tick_terminal_descricao` | string | Descrição do terminal que realizou a reserva |
+
+                | `cod_local_venda` | number | Código do estabelecimento que realizou a venda |
+
+                | `ponto_venda` | string | URL do e-commerce que realizou a venda |
+
+                | `idorigem` | string | ID da venda no estabelecimento de origem |
+
+                | `origem_venda` | string | Origem da inserção da reserva |
+
+                | `campanha_venda` | string | Campanha da reserva |
+
+                | `nome_titular` | string | Nome do titular da venda |
+
+                | `email_titular` | string | E-mail do titular da venda |
+
+                | `fone_titular` | string | Telefone do titular da venda |
+
+                | `doc_titular` | string | Documento do titular da venda |
+
+                | `nascimento_titular` | string | Data de nascimento do titular da venda formatada |
+
+                | `idioma` | string | Idioma da venda ("PT", "EN", "ES") |
+
+                | `pedido_de_cancelamento` | boolean | Se a venda tem algum item com pedido de cancelamento |
+
+                | `ec_origem` | number | Código do e-commerce que realizou a reserva |
+
+                | `idioma` | string | Idioma da reserva |
+
+                | `ip_comprador` | string | IP do dispositivo do comprador |
+
+                | `pedido_de_cancelamento` | boolean | Informa se a reserva tem algum item com pedido de cancelamento |
+
+                | `ec_usuario_f` | number | Código identificador do cliente final do e-commerce |
+
+                | `login_ec_usuario_f` | string | Login do cliente final do e-commerce |
+
+                | `email_ec_usuario_f` | string | E-mail do cliente final do e-commerce |
+
+                | `nome_ec_usuario_f` | string | Nome do cliente final do e-commerce |
+
+                | `documento_ec_usuario_f` | string | Documento do cliente final do e-commerce |
+
+                | `inc_ec_usuario_f` | string | Data de inclusão do cadastro do cliente final do e-commerce |
+
+                | `alt_ec_usuario_f` | string | Data de última alteração do cadastro do cliente final do e-commerce |
+
+                | `ec_origem_ec_usuario_f_criacao` | number | Código do usuário do local de venda onde o cliente final se registrou, ou seja, em qual e-commerce |
+
+                | `codigo_postal_f` | number | Código postal do usuário que realizou a compra |
+
+                | `bairro_f` | string | Nome do Bairro do usuário que realizou a compra |
+
+                | `municipio_f` | string | Cidade do usuário que realizou a compra |
+
+                | `numero_f` | number | Número do Endereço do usuário que realizou a compra |
+
+                | `endereco_f` | string | Endereço do usuário que realizou a compra |
+
+                | `ibge_f` | number | Código do IBGE da cidade do usuário que realizou a compra |
+
+                | `pais_f` | number | Código do País do usuário que realizou a compra |
+
+                | `desc_pais_f` | string | Descrição do País do usuário que realizou a compra |
+
+                | `estado_f` | string | Estado do usuário do usuário que realizou a compra |
+
+                | `ec_origem_ec_usuario_f` | number | Código do usuário do local de venda onde o cliente final se registrou, ou seja, em qual e-commerce |
+
+                | `nome_usuario_criacao` | string | Nome do usuário do local de venda onde o cliente final se registrou, ou seja, em qual e-commerce |
+
+                | `ec_origem_ec_usuario_f_nome` | string | Nome do usuário do local de venda onde o cliente final se registrou, ou seja, em qual e-commerce |
+
+                | `quantidade` | number | Quantidade de itens da venda |
+
+                | `id_cupom_desc` | string | Código unitário do cupom de desconto aplicado na venda |
+
+                | `cupom_desc` | string | Cupom de desconto aplicado na venda |
+
+                | `payment_id_pix` | string | Código unitário do pix gerado para pagamento da venda |
+
+                | `qrcode_pix` | string | QRCode do pix gerado para pagamento da venda |
+
+                | `status_pix` | string | Status do pix de pagamento da venda |
+
+                | `data` | string | Data da venda formatada - DD/MM/YYYY |
+
+                | `hora` | string | Hora da venda formatada - HH:mm:ss |
+
+                | `usuario_logado_cod_nome` | string | Código do usuário do CARD que realizou a reserva e Nome do usuário do CARD que realizou a reserva |
+
+                | `siglaIdioma` | string | Sigla do Idioma que foi realizado a compra |
+
+                | `status_desc` | string | Label referente ao status da venda  <br>R - Reservado (Sem Pagamento)  <br>X - Inutilizada (Não confirmou o Pagamento)  <br>A - Aprovada  <br>C - Cancelada (Estorno) |
+
+            security:
+                -   bearerAuth: [ ]
+            parameters:
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                    example: 'Bearer '
+                -   name: idVenda
+                    in: path
+                    schema:
+                        type: number
+                    required: true
+                    description: ID da venda (codigo)
+            responses:
+                '200':
+                    description: OK
+                    headers:
+                        Server:
+                            schema:
+                                type: number
+                                example: nginx/1.20.1
+                        Date:
+                            schema:
+                                type: string
+                                example: Thu, 16 Feb 2023 11:14:53 GMT
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                        Transfer-Encoding:
+                            schema:
+                                type: string
+                                example: chunked
+                        Connection:
+                            schema:
+                                type: string
+                                example: keep-alive
+                        Vary:
+                            schema:
+                                type: string
+                                example: Origin
+                        X-Powered-By:
+                            schema:
+                                type: string
+                                example: Express
+                        Access-Control-Allow-Origin:
+                            schema:
+                                type: string
+                                example: '*'
+                        Access-Control-Allow-Credentials:
+                            schema:
+                                type: boolean
+                                example: 'true'
+                        Access-Control-Allow-Methods:
+                            schema:
+                                type: string
+                                example: PUT, GET, POST, DELETE, OPTIONS
+                        Access-Control-Allow-Headers:
+                            schema:
+                                type: string
+                                example: Authorization, Content-Type, Device
+                        Access-Control-Expose-Headers:
+                            schema:
+                                type: string
+                                example: x-auth-token
+                        ETag:
+                            schema:
+                                type: string
+                                example: W/"e186-BZynfkxs31taICsL/7CnLC1CFL8"
+                        Content-Encoding:
+                            schema:
+                                type: string
+                                example: gzip
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                            example:
+                                -   codigo: 123123
+                                    localizador: LB00123123
+                                    data_hora: 20/02/2023 15:41:42
+                                    status: X
+                                    total_liquido: 50
+                                    data_hora_inc: '2023-02-20T18:41:42.102Z'
+                                    usuario_logado: 121
+                                    usuario_logado_nome: Ecommerce - parque - Ecommerce Demonstração
+                                    usuario_venda: Fulano de tal
+                                    codigo_promocional: null
+                                    reserva_suspeita: false
+                                    local_venda: 161
+                                    pedido_voucher_cred_portal: S
+                                    pedido_canc_portal: S
+                                    intervalo_tempo_pagamento: 15
+                                    nome_local_venda: parque Ecommerce demonstração
+                                    tick_codigo: null
+                                    tick_nome: null
+                                    tick_codigo_nome: null
+                                    tick_terminal: null
+                                    tick_terminal_descricao: null
+                                    ponto_venda: https://ingressos.seuparque.com.br
+                                    idorigem: null
+                                    origem_venda: WEB
+                                    campanha_venda: null
+                                    nome_titular: Fulano de tal
+                                    email_titular: fulanodetal@email.com
+                                    doc_titular: '09803500937'
+                                    fone_titular: +55 47991806042
+                                    nascimento_titular: 13/03/2003
+                                    ec_origem: 3
+                                    idioma: Português
+                                    ip_comprador: null
+                                    pedido_de_cancelamento: false
+                                    ec_usuario_f: 147
+                                    login_ec_usuario_f: fulanodetal@email.com
+                                    email_ec_usuario_f: fulanodetal@email.com
+                                    nome_ec_usuario_f: Fulano de tal
+                                    documento_ec_usuario_f: '09803500937'
+                                    inc_ec_usuario_f: 14/11/2022 08:21:34
+                                    alt_ec_usuario_f: 13/02/2023 15:41:41
+                                    ec_usuario_f_usuario_criacao: 121
+                                    nome_usuario_criacao: Ecommerce - parque - Ecommerce Demonstração
+                                    ec_origem_ec_usuario_f: 3
+                                    ec_origem_ec_usuario_f_nome: parque - Ecommerce Demonstração
+                                    quantidade: 1
+                                    id_cupom_desc: null
+                                    cupom_desc: null
+                                    payment_id_pix: null
+                                    qrcode_pix: null
+                                    status_pix: null
+                                    data: 20/02/2023
+                                    hora: '15:41:42'
+                                    usuario_logado_cod_nome: 121 - Ecommerce - parque - Ecommerce Demonstração
+                                    status_desc: Inutilizada (Não confirmou o Pagamento)
+
+    /api/vendas/venda/cancelamentos/{idVenda}:
+        get:
+            tags:
+                - Consultas
+            summary: Consultar cancelamentos da venda
+            description: Rota destinada a buscar informações sobre o cancelamento de uma venda.
+            security:
+                -   bearerAuth: [ ]
+            parameters:
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                        properties:
+                            idVenda:
+                                type: integer
+                                description: ID único da venda
+                    example: 'Bearer '
+                -   name: idVenda
+                    in: path
+                    schema:
+                        type: number
+                    required: true
+                    description: ID da venda (codigo)
+            responses:
+                '200':
+                    description: OK
+                    headers:
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    codigo:
+                                        type: number
+                                        description: ID único da venda
+                                        example: 123456777
+                                    sequencia:
+                                        type: number
+                                        description: Código sequencial do item da venda
+                                        example: 1
+                                    usuario_pedido:
+                                        type: number
+                                        description: Código do Usuário que realizou o pedido de Cancelamento da Venda
+                                        example: 999
+                                    usuario_pedido_nome:
+                                        type: string
+                                        description: Nome do Usuário que realizou o pedido de Cancelamento da Venda
+                                        example: "Aquele Usuário Mesmo"
+                                    data_hora_pedido:
+                                        type: string
+                                        format: date-time
+                                        description: Data e Hora em que foi realizado o Pedido
+                                        example: "2024-01-03T17:47:42Z"
+                                    motivo_canc:
+                                        type: string
+                                        description: Motivo para o Cancelamento da venda
+                                        example: "AQUI ESTÁ SEU MOTIVO"
+                                    valor_cancelado:
+                                        type: number
+                                        format: float
+                                        description: Valor total da venda
+                                        example: 0.02
+                                    usuario_canc:
+                                        type: number
+                                        description: Código do Usuário que realizou o cancelamento da venda
+                                        example: 999
+                                    usuario_canc_nome:
+                                        type: string
+                                        description: Nome Cadastrado do Usuário que realizou a venda
+                                        example: "Aquele Usuário Mesmo"
+                                    data_hora_canc:
+                                        type: string
+                                        format: date-time
+                                        description: Data e Hora que foi realizado o cancelamento
+                                        example: "2024-01-03T17:47:42Z"
+                                    b_comprovante_canc:
+                                        type: string
+                                        description: Comprovante do Cancelamento
+                                        example: "Comprovante de cancelamento"
+                                    canc_manual:
+                                        type: boolean
+                                        description: Verifica se o Cancelamento foi feito Manualmente
+                                        example: false
+                                    status:
+                                        type: string
+                                        description: Caractere identificador do status da venda
+                                        example: "C"
+                                    b_comprovante_confirm_canc:
+                                        type: string
+                                        description: Comprovante do Cancelamento da Venda
+                                        example: null
+                                    data_hora_envio_adquirente:
+                                        type: string
+                                        description: Data e Hora que foi realizado o envio da Adquirente
+                                        example: null
+
+    /api/vendas/venda/pagamentos/{idVenda}:
+        get:
+            tags:
+                - Consultas
+            summary: Consultar pagamentos da venda
+            description: >-
+                Rota destinada a buscar informações sobre o cancelamento de uma venda.
+
+
+                ## Descrição do retorno
+
+
+                | Chave | Tipo | Descrição |
+
+                | --- | --- | --- |
+
+                | `codigo` | number | ID único da venda |
+
+                | `sequencia` | number | Código sequencial do item da venda |
+
+                | `valor` | number | Valor de um Item da venda |
+
+                | `cartao_bandeira` | string | Bandeira Do Cartão Utilizado na Venda |
+
+                | `parcela` | number | Número de Parcelas que foi escolhido na hora do Pagamento |
+
+                | `cartao_autorizacao` | number | Código de Autorização do Cartão |
+
+                | `cartao_nsu` | number | Código NSU do Cartão |
+
+                | `cartao_terminal_nsu` | number | Código do Terminal NSU do Cartão |
+
+                | `b_comprovante` | string | Armazena Objeto enviado para adquirente, e o retorno da mesma |
+
+                | `cartao_bin` | number | São os seis primeiros números do cartão |
+
+                | `cartao_quatro_ult` | number | Útimos quatro dígitos do Cartão que foi usado na Compra |
+
+                | `ip_comprador` | number | IP da Máquina de quem realizou a compra |
+
+                | `cartao_tipo` | string | Tipo do Crtão utilizado na Compra |
+
+                | `forma_pag` | number | Forma de Pagamento Utilizado |
+
+                | `data_hora_autorizacao` | string | Data e Hora que o Pagamento foi autorizado na Adquirente(Cartão) ou no Banco(PIX) |
+
+                | `ambiente` | string | Ambiente que foi realizado a compra ("H": Homologação, "P": Produção) |
+
+                | `nome_adquirente` | string | Nome da Adquierente do Pagamento |
+
+            security:
+                -   bearerAuth: [ ]
+            parameters:
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                    example: 'Bearer '
+                -   name: idVenda
+                    in: path
+                    schema:
+                        type: number
+                    required: true
+                    description: ID da venda (codigo)
+            responses:
+                '200':
+                    description: OK
+                    headers:
+                        Server:
+                            schema:
+                                type: number
+                                example: nginx/1.20.1
+                        Date:
+                            schema:
+                                type: string
+                                example: Thu, 16 Feb 2023 11:14:53 GMT
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                        Transfer-Encoding:
+                            schema:
+                                type: string
+                                example: chunked
+                        Connection:
+                            schema:
+                                type: string
+                                example: keep-alive
+                        Vary:
+                            schema:
+                                type: string
+                                example: Origin
+                        X-Powered-By:
+                            schema:
+                                type: string
+                                example: Express
+                        Access-Control-Allow-Origin:
+                            schema:
+                                type: string
+                                example: '*'
+                        Access-Control-Allow-Credentials:
+                            schema:
+                                type: boolean
+                                example: 'true'
+                        Access-Control-Allow-Methods:
+                            schema:
+                                type: string
+                                example: PUT, GET, POST, DELETE, OPTIONS
+                        Access-Control-Allow-Headers:
+                            schema:
+                                type: string
+                                example: Authorization, Content-Type, Device
+                        Access-Control-Expose-Headers:
+                            schema:
+                                type: string
+                                example: x-auth-token
+                        ETag:
+                            schema:
+                                type: string
+                                example: W/"e186-BZynfkxs31taICsL/7CnLC1CFL8"
+                        Content-Encoding:
+                            schema:
+                                type: string
+                                example: gzip
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                            example:
+                              {
+                                  "codigo": 20384772,
+                                  "sequencia": 1,
+                                  "valor": 0.02,
+                                  "cartao_bandeira": "H",
+                                  "parcelas": 1,
+                                  "cartao_autorizacao": "999999999999",
+                                  "cartao_nsu": "88888888",
+                                  "cartao_terminal_nsu": "666666",
+                                  "b_comprovante": "{\"dadosEnviados\":{\"cartao\":{\"tipo\":1,\"titular\":\"taz mania\",\"numero\":\"444444****4444\",\"cvv\":\"***\",\"validade\":\"06/2026\",\"parcelas\":1},\"ordem\":{\"valor\":0.02,\"codigo\":\"20384772\"},\"cliente\":{\"codigo\":\"EC_228\",\"nome\":\"taz mania\",\"fone\":null,\"endereco\":null,\"desativaAntifraude\":false},\"dispositivo\":null,\"split\":{\"subsellerPayments\":[]}},\"json\":{\"seller_id\":\"38cbbb35-bd89-40a3-92a5-022201398ae0\",\"amount\":\"2\",\"currency\":\"BRL\",\"order\":{\"order_id\":\"20384772-17.41.52\",\"sales_tax\":0,\"product_type\":\"service\"},\"customer\":{\"customer_id\":\"EC_228\",\"first_name\":\"taz\",\"last_name\":\"mania\",\"name\":\"taz mania\",\"billing_address\":{}},\"shippings\":[{\"first_name\":\"taz\",\"name\":\"taz mania\",\"shipping_amount\":0,\"address\":{}}],\"credit\":{\"delayed\":false,\"authenticated\":false,\"pre_authorization\":false,\"save_card_data\":false,\"transaction_type\":\"FULL\",\"number_installments\":1,\"card\":{\"number_token\":\"4fb9f70bac6ef35d01001791c3e9e4411fd690a0944e3c80ce8a73f060d6c0dbd06ab0382d9cd7c4022a107ade6d0d61472d26b46c5a060e5de35d8010e0210b\",\"cardholder_name\":\"taz mania\",\"security_code\":\"***\",\"expiration_month\":\"06\",\"expiration_year\":\"26\"}}},\"retorno\":{\"payment_id\":\"b8bc4c36-5a04-423d-b64c-382db09ef44b\",\"seller_id\":\"38cbbb35-bd89-40a3-92a5-022201398ae0\",\"amount\":2,\"currency\":\"BRL\",\"order_id\":\"20384772-17.41.52\",\"status\":\"APPROVED\",\"received_at\":\"2024-01-03T20:41:53.369Z\",\"credit\":{\"delayed\":false,\"authorization_code\":\"610070334207\",\"authorized_at\":\"2024-01-03T20:41:53.369Z\",\"reason_code\":\"0\",\"reason_message\":\"transaction approved\",\"acquirer\":\"GETNET\",\"soft_descriptor\":\"EC*SANDBOX\",\"terminal_nsu\":\"787350\",\"acquirer_transaction_id\":\"53545239\",\"transaction_id\":\"2097839629120308\",\"first_installment_amount\":\"2\",\"other_installment_amount\":\"2\",\"total_installment_amount\":\"2\"}}}",
+                                  "cartao_bin": "444444",
+                                  "cartao_quatro_ult": "4444",
+                                  "ip_comprador": "111.111.111.11",
+                                  "cartao_tipo": "C",
+                                  "forma_pag": 1,
+                                  "data_hora_autorizacao": "03/01/2024 17:41:53",
+                                  "ambiente": "H",
+                                  "nome_adquirente": "Nome Adquirente"
+                              }
+
+    /api/vendas/venda/itens/{idVenda}:
+        get:
+            tags:
+                - Consultas
+            summary: Consulta de itens de uma venda
+            description: >-
+                Rota com o objectivo de retornar dados dos ingressos de uma venda,
+                juntamente com as receitas de cada um.
+
+
+                ## Dados do retorno
+
+
+                | Atributo | Tipo | **Descrição** |
+
+                | --- | --- | --- |
+
+                | `codigo` | number | Código da venda |
+
+                | `sequencia` | number | Código sequencial do item da venda |
+
+                | `uf` | string | Estado escolhido pelo titular da reserva |
+
+                | `pais` | number | Código do país escolhido pelo titular da reserva |
+
+                | `desc_pais` | strin | Nome do país escolhido pelo titular da reserva |
+
+                | `bilhete` | number | Código do bilhete |
+
+                | `nome_bilhete` | string | Nome do Bilhete |
+
+                | `controle_disponibilidade` | string | Caractere que define o tipo de controle de disponibilidade do item: "H" - Horários, "V" - Vagas, "M" - Mapa de Assentos |
+
+                | `venda_sem_data_visita` | string | Define se a venda foi realizada sem data de visita escolhida - "S"/"N" |
+
+                | `texto_impressao` | string | Texto para a impressão do ingresso |
+
+                | `texto_impressao_horario` | string | Texto para a impressão do ingresso |
+
+                | `texto_hora_vis_voucher` | string | Texto para a impressão - refentente à disponibilidade |
+
+                | `texto_data_vis_voucher` | string | Texto para a impressão - refentente à data de visita |
+
+                | `texto_embarque_voucher` | string | Texto para a impressão - refentente ao local de embarque |
+
+                | `texto_sessao_imp` | string | Texto para a impressão - refentente à sessão |
+
+                | `texto_vagao` | string | Texto para a impressão - refentente ao vagão |
+
+                | `texto_poltrona` | string | Texto para a impressão - refentente à poltrona |
+
+                | `permite_visualizar_ingressos` | booelan | Parâmetro que verifica se é permitido a visualização de Ingressos |
+
+                | `texto_motivo_nao_ver_ing_ec` | string | Texto explicando o motivo de não ser possível visualizar o ingresso |
+
+                | `mostra_horario_final` | string | Define se o bilhete irá informar o horário final |
+
+                | `imprime_valor_tick` | booelan | Parâmetro que verifica se Imprime o Valor no Tick |
+
+                | `utiliza_qrcode` | boolean | Se o ingresso utiliza qrcode ou não |
+
+                | `categoria` | number | Código da categoria |
+
+                | `nome_categoria` | string | Nome da categoria |
+
+                | `privativo` | boolean | Define se a categoria é do tipo privativo |
+
+                | `imagem_categoria` | string | Imagem referente à categoria |
+
+                | `operacao` | number | Código da operação |
+
+                | `cancelado` | boolean | Define se o item foi cancelado ou não |
+
+                | `cancelamentos_codigo` | number Array | Código dos cancelamentos relacionados ao item |
+
+                | `data_hora_pedido_canc` | string | Data e Hora do Pedido de Cancelamento |
+
+                | `quantidade` | number | Quantidade de ingressos |
+
+                | `vlr_total` | number | Valor total do item (contém descontos de cupom) |
+
+                | `vlr_unitario` | number | Valor unitário do ingresso (valor bruto) |
+
+                | `id_cupom_desc` | string | Código unitário do cupom de desconto aplicado na venda |
+
+                | `cupom_desc` | string | Cupom de desconto aplicado na venda |
+
+                | `atrativo_nome` | string | Nome do visitante |
+
+                | `atrativo_doc` | string | Documento do visitante |
+
+                | `atrativo_email` | string | E-mail do visitante |
+
+                | `atrativo_convenio` | string | Código do visitante |
+
+                | `observacao_convenio` | string | Texto de Observações do Convênio |
+
+                | `nome_convenio` | string | Nome do convênio do visitante |
+
+                | `atrativo_data_nasc` | string | Data de nascimento do visitante |
+
+                | `lb_int_tipo_venda` | string | ?? |
+
+                | `contrib_fundo` | boolean | Se foi escolhido contribuir com o Fundo do ingresso |
+
+                | `morador_tipo_doc` | string | Tipo do documento do morador local |
+
+                | `qr_code_exp` | string | QRcode do item |
+
+                | `card_id` | number |  |
+
+                | `descricao_venda` | string | Descrição da venda |
+
+                | `dados_incompletos` | boolean | Define se na hora da reserva, os dados dos visitantes não foram preenchidos |
+
+                | `local_de_apanhe` | number | Código do local de apanhe |
+
+                | `local_de_apanhe_nome` | string | Nome do local de apanhe |
+
+                | `local_de_apanhe_endereco` | string | Endereço do local de apanhe |
+
+                | `data_visita` | string | Data de visita (primeiro entre receitas) |
+
+                | `data_visita_final` | string | Data de visita final entre as receitas |
+
+                | `dias_para_alterar_visitantes` | number | Dias limite antes da data de visita para alterar os dados dos visitantes |
+
+                | `integracao_carteiras_digital` | string | Verifica se está habilitado Integração com Carteiras Digitais |
+
+                | `permite_info_visitante_depois` | booelan | Parâmetro que Ativa/Desativa a opção de preencher os dados do Visitante após finalizar a compra |
+
+                | `reserva_suspeita` | boolean | Informa que a venda é suspeita |
+
+                | `remarca_visitante` | boolean | Verifica se o bilhete permite alterar dados do visitante na remarcação |
+
+                | `remarca_data_visita` | boolean | Verifica se o bilhete permite alterar data de visita na remarcação |
+
+                | `remarca_hora_visita` | boolean | Verifica se o bilhete permite alterar horário da visita na remarcação |
+
+                | `receitas[]` | Object Array | Lista de Receitas disponíveis para o Item |
+
+                | `receitas[].codigo` | number | ID da Venda |
+
+                | `receitas[].sequencia` | number | Primeiro código da temporada entre as receitas |
+
+                | `receitas[].tipo_receita` | number | Código da receita |
+
+                | `receitas[].preco` | number | Preço Definido para o Produto na Receita determinada |
+
+                | `receitas[].preco_bruto` | number | Primeiro código da temporada entre as receitas |
+
+                | `receitas[].prog_horario` | number | Código da Programação de Horários para o Item na receita informada |
+
+                | `receitas[].prog_seq` | number | Sequencia do Horário na Programação de Horários para o Item na receita informada |
+
+                | `receitas[].lb_vou_idvenda` | string | ID da venda na bilheteria |
+
+                | `receitas[].lb_vou_datahora` | string | Data e Hora da venda na bilheteria |
+
+                | `receitas[].estabelec` | string | Nome do Estabelecimento |
+
+                | `receitas[].versao` | number | Versão do cadastro do estabelecimento em relação à integração com a bilheteria |
+
+                | `receitas[].estabelec_dest` | number | Estabelecimento de Destino do Item |
+
+                | `receitas[].id_produto` | number | ID Do Item |
+
+                | `receitas[].data_visita` | date | Data de visita (primeiro entre receitas) |
+
+                | `receitas[].data_visita_final` | date | Data de visita final entre as receitas |
+
+                | `receitas[].hoje_entre_visitas` | date | Se a data atual está entre a data de visita inicial e final |
+
+                | `receitas[].horario_str` | string | Descrição do horário ou vaga |
+
+                | `receitas[].local_embarque` | number | Código do Local de Embarque |
+
+                | `receitas[].local_embarque_nome` | string | Nome do Local de Embarque |
+
+                | `receitas[].local_embarque_desc` | string | Descrição sobre o Local de Embarque |
+
+                | `receitas[].sessao` | number | Código da Sessão |
+
+                | `receitas[].sessao_nome` | string | Nome Da Sessão |
+
+                | `receitas[].placa` | string |  |
+
+                | `receitas[].poltrona` | string |  |
+
+                | `receitas[].mostra_horario_final` | string | Verifica se Mostra o Horário Final |
+
+                | `receitas[].credenciado` | number | Código do Credenciado Cadastrado |
+
+                | `receitas[].credenciado_nome` | string | Nome do Credenciado Cadastrado |
+
+                | `receitas[].credenciado_cpf` | number | CPF do Credenciado Cadastrado |
+
+                | `receitas[]idioma_escolhido` | string | Idioma Escolhido |
+
+                | `receitas[].habilita_vendas_dias_corridos` | boolean | Parâmetro para geração de QrCode para a quantidade determinada de dias após o dia escolhido para a visita |
+
+                | `receitas[].evento` | boolean | Parâmetro que verifica se o Item é para um Evento |
+
+                | `receitas[].data_hora_utilizacao` | string | Data e Hora da Utilização do Item |
+
+                | `receitas[].leituras[]` | Object Array |  |
+
+                | `receitas[].leituras[].sequencia` | number | Sequência do item |
+
+                | `receitas[].leituras[].seq` | number | Sequência da receita |
+
+                | `receitas[].leituras[].seq_leitura` | number | Sequência da leitura |
+
+                | `receitas[].leituras[].usu_data_hora` | string | Data e Hora da leitura <br>Formato: **YYYY-MM-DD HH:mm** |
+
+                | `receitas[].leituras[].uso_terminal` | string | Identificador do terminal da leitura  |
+
+                | `receitas[].tem_leitura_hoje` | boolean | Parâmetro que identifica se Possui Leituras disponíveis para o dia atual |
+
+                | `receitas[].horario_str_formatado` | string | Horário escolhido para a Data de Visita já formatado |
+
+                | `receitasAgrupadas[]` | Object Array | Lista de Receitas Agrupadas disponíveis para o Item |
+
+                | `receitasAgrupadas[].tipo_receita` | number | ID da Venda |
+
+                | `receitasAgrupadas[].receita` | string | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].data_visita` | date | Código da receita |
+
+                | `receitasAgrupadas[].data_visita_final` | date | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].credenciado` | number | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].local_embarque` | number | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].local_embarque_nome` | string | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].local_embarque_desc` | string | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].sessao` | number | Primeiro código da temporada entre as receitasAgrupadas |
+
+                | `receitasAgrupadas[].sessao_nome` | string | Nome da Sessão |
+
+                | `receitasAgrupadas[].poltrona` | number | Código da Poltrona |
+
+                | `receitasAgrupadas[].placa` | string |  |
+
+                | `receitasAgrupadas[].horario_str` | string | Horário da Receita em string |
+
+                | `receitasAgrupadas[].data_hora_utilizacao` | string | Data e Hora de Utilização do Item |
+
+                | `receitasAgrupadas[].leituras[]` | Array | Array de Leituras feitas no Item |
+
+                | `tem_leitura_hoje` | string | Verifica se Há Leituras Disponíveis para a Data atual |
+
+                | `qnt_receitas` | string | Quantidade de Receitas No Item |
+
+                | `qnt_receitas_lidas` | string | Quantidade de Receitas Lidas |
+
+                | `qnt_receitas_utilizadas` | string | Quantidade de Receitas Utilizadas |
+
+                | `local_embarque` | string | Código do Local de Embarque |
+
+                | `desc_local_embarque` | string | Descrição do Local de Embarque |
+
+                | `temporada` | string | Código da Temporada |
+
+                | `temporada_nome` | string | Nome da Temporada |
+
+                | `horario_str` | string | Horário em formato de String |
+
+            security:
+                -   bearerAuth: [ ]
+            parameters:
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                    example: 'Bearer '
+                -   name: idVenda
+                    in: path
+                    schema:
+                        type: number
+                    required: true
+                    description: ID da venda (codigo)
+            responses:
+                '200':
+                    description: OK
+                    headers:
+                        Server:
+                            schema:
+                                type: number
+                                example: nginx/1.20.1
+                        Date:
+                            schema:
+                                type: string
+                                example: Thu, 16 Feb 2023 11:14:53 GMT
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                        Transfer-Encoding:
+                            schema:
+                                type: string
+                                example: chunked
+                        Connection:
+                            schema:
+                                type: string
+                                example: keep-alive
+                        Vary:
+                            schema:
+                                type: string
+                                example: Origin
+                        X-Powered-By:
+                            schema:
+                                type: string
+                                example: Express
+                        Access-Control-Allow-Origin:
+                            schema:
+                                type: string
+                                example: '*'
+                        Access-Control-Allow-Credentials:
+                            schema:
+                                type: boolean
+                                example: 'true'
+                        Access-Control-Allow-Methods:
+                            schema:
+                                type: string
+                                example: PUT, GET, POST, DELETE, OPTIONS
+                        Access-Control-Allow-Headers:
+                            schema:
+                                type: string
+                                example: Authorization, Content-Type, Device
+                        Access-Control-Expose-Headers:
+                            schema:
+                                type: string
+                                example: x-auth-token
+                        ETag:
+                            schema:
+                                type: string
+                                example: W/"e186-BZynfkxs31taICsL/7CnLC1CFL8"
+                        Content-Encoding:
+                            schema:
+                                type: string
+                                example: gzip
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                            example:
+                                "codigo": 20384772,
+                                "sequencia": 1,
+                                "uf": PR,
+                                "pais": 1,
+                                "desc_pais": Brasil,
+                                "bilhete": 3711,
+                                "nome_bilhete": bilhete com alguns km,
+                                "controle_disponibilidade": H,
+                                "venda_sem_data_visita": N,
+                                "texto_impressao": null,
+                                "texto_impressao_horario": null,
+                                "texto_hora_vis_voucher": null,
+                                "texto_data_vis_voucher": null,
+                                "texto_embarque_voucher": null,
+                                "texto_sessao_imp": null,
+                                "texto_vagao": null,
+                                "texto_poltrona": null,
+                                "permite_visualizar_ingressos": true,
+                                "texto_motivo_nao_ver_ing_ec": null,
+                                "mostra_horario_final": S,
+                                "imprime_vlr_tick": true,
+                                "utiliza_qrcode": true,
+                                "categoria": 3219,
+                                "nome_categoria": Adulto casa do Erick,
+                                "privativo": false,
+                                "imagem_categoria": https://cdntestes.limbersoftware.com.br/img/categorias/LbP76IjzNnlF1zu.webp,
+                                "operacao": 501,
+                                "cancelado": true,
+                                "cancelamentos_codigo": [1]
+                                "data_hora_pedido_canc": 03/01/2024 17:47,
+                                "quantidade": 1,
+                                "vlr_total": 0.01,
+                                "vlr_unitario": 0.01,
+                                "id_cupom_desc": null,
+                                "cupom_desc": null,
+                                "atrativo_nome": Taz Mania,
+                                "atrativo_doc": RG-123456789,
+                                "atrativo_email": null,
+                                "atrativo_convenio": null,
+                                "observacao_convenio": null,
+                                "nome_convenio": null,
+                                "atrativo_data_nasc": 10/11/2023,
+                                "lb_int_tipo_venda": B,
+                                "contrib_fundo": false,
+                                "morador_tipo_doc": null,
+                                "qr_code_exp": null,
+                                "card_id": null,
+                                "descricao_venda": null,
+                                "dados_incompletos": false,
+                                "local_de_apanhe": null,
+                                "local_de_apanhe_nome": null,
+                                "local_de_apanhe_endereco": null,
+                                "data_visita": 03/01/2024,
+                                "data_visita_final": 03/01/2024,
+                                "dias_para_alterar_visitantes": null,
+                                "integracao_carteiras_digitais": S,
+                                "perm_remarcacao": N,
+                                "permite_info_visitante_depois": true,
+                                "reserva_suspeita": false,
+                                "remarca_visitante": false,
+                                "remarca_data_visita": false,
+                                "remarca_hora_visita": false
+                                "receitas":
+                                    - [
+                                        {
+                                            "codigo": 20384772,
+                                            "sequencia": 1,
+                                            "tipo_receita": 3085,
+                                            "seq": 1,
+                                            "receita": "time WEB",
+                                            "preco": 0.01,
+                                            "preco_bruto": 0.01,
+                                            "prog_horario": 3711,
+                                            "prog_seq": 25,
+                                            "lb_vou_idvenda": null,
+                                            "lb_vou_datahora": null,
+                                            "estabelec": Bilheteria - TIME DEV WEB,
+                                            "permite_utilizacao_card": false,
+                                            "versao": null,
+                                            "estabelec_dest": 322,
+                                            "id_produto": null,
+                                            "data_visita": "03/01/2024",
+                                            "data_visita_final": null,
+                                            "hoje_entre_visitas": false,
+                                            "temporada": 125,
+                                            "temporada_nome": festival da casa do Erick,
+                                            "horario_str": "01:00-23:00",
+                                            "local_embarque": 69,
+                                            "local_embarque_nome": Maiis km's,
+                                            "local_embarque_desc": null,
+                                            "sessao": null,
+                                            "sessao_nome": null,
+                                            "placa": null,
+                                            "poltrona": null,
+                                            "mostra_horario_final": S,
+                                            "credenciado": null,
+                                            "credenciado_nome": null,
+                                            "credenciado_cpf": null,
+                                            "idioma_escolhido": null,
+                                            "habilita_venda_dias_corridos": false,
+                                            "evento": false,
+                                            "data_hora_utilizacao": null,
+                                            "habilita_remarcar_qtd": true,
+                                            "leituras": [ ],
+                                            "tem_leitura_hoje": false,
+                                            "horario_str_formatado": "01:00 às 23:00"
+                                        }
+                                    ]
+                                "receitasAgrupadas":
+                                    - [
+                                        {
+                                            "tipo_receita": 3085,
+                                            "receita": "time WEB",
+                                            "data_visita": "03/01/2024",
+                                            "data_visita_final": null,
+                                            "credenciado": null,
+                                            "local_embarque": 69,
+                                            "local_embarque_nome": Maiis km's,
+                                            "local_embarque_desc": null,
+                                            "sessao": null,
+                                            "sessao_nome": null,
+                                            "poltrona": null,
+                                            "placa": null,
+                                            "horario_str": "01:00-23:00",
+                                            "data_hora_utilizacao": null,
+                                            "leituras": [ ]
+                                        }
+                                    ]
+                                "tem_leitura_hoje": false,
+                                "qtd_receitas": 1,
+                                "qtd_receitas_lidas": 0,
+                                "qtd_receitas_utilizadas": 0,
+                                "local_embarque": 69,
+                                "desc_local_embarque": null,
+                                "temporada": 125,
+                                "temporada_nome": festival da casa do Erick,
+                                "horario_str": "01:00-23:00"
+
+    /api/cross/paises:
+        get:
+            tags:
+                - Consultas
+            summary: Consulta de Países
+            description: Rota destinada a retornar a Lista de Países para preenchimento da informação para Integração da Reserva
+            parameters:
+                - name: Authorization
+                  in: header
+                  schema:
+                      type: string
+                  example: 'Bearer '
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    idPais:
+                                        type: number
+                                        description: Código do Pais
+                                    nomePais:
+                                        type: string
+                                        description: Nome do País
+                                    codigoISO:
+                                        type: string
+                                        description: Código ISO do País 3166-1
+                                    sigla3dig:
+                                        type: string
+                                        description: Sigla do País com 3 Caracteres
+                                    sigla2dig:
+                                        type: string
+                                        description: Sigla do País com 2 Caracteres
+                                    outrosNomes:
+                                        type: string
+                                        description: Outros Nomes reconhecidos do País
+                                    ddi:
+                                        type: number
+                                        description: Código de Discagem Direta Internacional do País
+                                    pathBandeira:
+                                        type: string
+                                        description: URL da imagem da bandeira do país
+                            example:
+                                -   idPais: 1
+                                    nomePais: Brasil
+                                    codigoISO: 076
+                                    sigla3dig: BRA
+                                    sigla2dig: BR
+                                    outrosNomes: Federative Republic of Brazil,República Federativa do Brasil
+                                    nomeOficial: Brazil,
+                                    ddi: 55,
+                                    pathBandeira: "https://cdntestes.limber.net.br/img/bandeiras/brazil.svg"
+                                -   idPais: 12
+                                    nomePais: Argentina
+                                    codigoISO: 032
+                                    sigla3dig: ARG
+                                    sigla2dig: AR
+                                    outrosNomes: Argentine Republic
+                                    nomeOficial: Argentina
+                                    ddi: 54,
+                                    pathBandeira: "https://cdntestes.limber.net.br/img/bandeiras/ar.svg"
+                '400':
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        description: Mensagem especificando o erro
+                            example:
+                                message: Mensagem especificando o erro
+
+    /api/cross/cep/CEP:
+        get:
+            tags:
+                - Consultas
+            summary: Consulta de CEP
+            description: Retorna o endereço de acordo com o CEP utilizado.
+            parameters:
+                -   name: Content-Type
+                    in: header
+                    schema:
+                        type: string
+                    example: application/json
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                    example: Bearer {{Token}}
+            responses:
+                '200':
+                    description: OK
+                    headers:
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cep:
+                                        type: string
+                                        description: CEP que foi informado
+                                        example: 85503-380
+                                    cidade:
+                                        type: string
+                                        description: Cidade ao qual o CEP é pertencente
+                                        example: Pato Branco
+                                    logradouro:
+                                        type: string
+                                        description: Endereço ao qual o CEP é pertencente
+                                        example: Avenida Elisa Rosa Colla Padoan
+                                    bairro:
+                                        type: string
+                                        description: Bairro ao qual o CEP é pertencente
+                                        example: Fraron
+                                    uf:
+                                        type: string
+                                        description: Unidade Federativa da cidade da qual o CEP é pertencente
+                                        example: PR
+                                    ibge:
+                                        type: integer
+                                        description: Código IBGE da localidade
+                                        example: 4118501
+                '400':
+                    description: Bad Request
+                    headers:
+                        Content-Type:
+                            schema:
+                                type: string
+                                example: application/json; charset=utf-8
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                            example:
+                                message: 'Falha na busca do CEP: 855033804'
+
+    /api/ec/clientes:
+        get:
+            tags:
+                - Consultas
+            summary: Consulta de Clientes
+            description: >-
+                Rota destinada a retornar a Lista de Clientes
+            parameters:
+                -   name: Authorization
+                    in: header
+                    schema:
+                        type: string
+                    example: 'Bearer '
+                -   name: search
+                    in: query
+                    schema:
+                        type: string
+                    description: Termo de pesquisa utilizado para filtrar resultados Nome/Email/Codigo
+                -   name: dataIniCad
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description:
+                        Início do período de filtro de data de cadastro.<br>
+                        Este campo deve ser utilizado junto com "dataFimCad"
+                -   name: dataFimCad
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description:
+                        Fim do período de filtro de data de cadastro.<br>
+                        Este campo deve ser utilizado junto com "dataIniCad"
+                -   name: dataIniAlt
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description:
+                        Início de período de filtro de última data de alteração.<br>
+                        Este campo deve ser utilizado junto com "dataIniAlt"
+                -   name: dataFimAlt
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description:
+                        Fim de período de filtro de última data de alteração.<br>
+                        Este campo deve ser utilizado junto com "dataIniAlt"
+                -   name: termos
+                    in: query
+                    schema:
+                        type: string
+                    description: Termos específicos para filtrar os resultados(separador por vírgula)
+                -   name: localVenda
+                    in: query
+                    schema:
+                        type: string
+                    description: E-commerce onde o usuário realizou alguma compra
+                -   name: dataIni
+                    deprecated: true
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description: "Utilize dataIniCad"
+                -   name: dataFim
+                    deprecated: true
+                    in: query
+                    schema:
+                        type: string
+                        format: date-time
+                    description: "Utilize dataFimCad"
+
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    codigo:
+                                        type: number
+                                        description: Código do Cliente
+                                    nome:
+                                        type: string
+                                        description: Nome do Cliente
+                                    email:
+                                        type: string
+                                        description: E-mail do Cliente
+                                    bloqueado:
+                                        type: boolean
+                                        description:  Cliente Bloqueado
+                                    grupo_usuarios:
+                                        type: string
+                                        description: Grupo de Usuários do Cliente
+                                    tipo_documento:
+                                        type: string
+                                        description: Tipo de documento do cliente
+                                    documento:
+                                        type: string
+                                        description: Número do documento do cliente
+                                    data_nasc:
+                                        type: string
+                                        format: date
+                                        description: Data de nascimento do cliente
+                                    telefone:
+                                        type: string
+                                        description: Número de telefone do cliente
+                                    nome_empresa_tur:
+                                        type: string
+                                        nullable: true
+                                        description: Nome da empresa do cliente no setor de turismo
+                                    segmento_tur:
+                                        type: string
+                                        nullable: true
+                                        description: Segmento de turismo do cliente
+                                    codigo_postal:
+                                        type: string
+                                        nullable: true
+                                        description: Código postal do cliente
+                                    pais:
+                                        type: integer
+                                        nullable: true
+                                        description: Código do país do cliente
+                                    estado:
+                                        type: string
+                                        nullable: true
+                                        description: Estado do cliente
+                                    municipio:
+                                        type: string
+                                        nullable: true
+                                        description: Município do cliente
+                                    bairro:
+                                        type: string
+                                        nullable: true
+                                        description: Bairro do cliente
+                                    endereco:
+                                        type: string
+                                        nullable: true
+                                        description: Endereço do cliente
+                                    numero:
+                                        type: string
+                                        nullable: true
+                                        description: Número do endereço do cliente
+                                    data_hora_cadastro:
+                                        type: string
+                                        format: date-time
+                                        nullable: true
+                                        description: Data e hora de cadastro do cliente
+                                    data_hora_alteracao:
+                                        type: string
+                                        format: date-time
+                                        nullable: true
+                                        description: Data e hora da última alteração no cliente
+                                    termos:
+                                        type: array
+                                        description: Lista de Termos
+                                        items:
+                                            type: object
+                                            properties:
+                                                codigo:
+                                                    type: number
+                                                    description: Código do Termo
+                                                nome:
+                                                    type: string
+                                                    description: Nome do Termo
+                                                data_hora_aceite_termo:
+                                                    type: string
+                                                    format: date-time
+                                                    description: Nome do Termo
+                            example:
+                                -   codigo: 123
+                                    nome: Bruce Wayne
+                                    email: brucewayne@waynecorp.com
+                                    bloqueado: false
+                                    grupo_usuarios: DEF
+                                    termos:
+                                        -   codigo: 1
+                                            nome: Termo 1
+                                            data_hora_aceite_termo: 2024-01-31T19:05:03.811Z
+                                        -   codigo: 2
+                                            nome: Termo 2
+                                            data_hora_aceite_termo: 2024-07-22T01:10:55.588Z
+                                        -   codigo: 3
+                                            nome: Termo 3
+                                            data_hora_aceite_termo: 2023-01-01T23:28:02.138Z
+                '400':
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        description: Mensagem especificando o erro
+                            example:
+                                message: Mensagem especificando o erro
